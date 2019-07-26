@@ -535,7 +535,7 @@ qboolean G2_SetSurfaceOnOff (qhandle_t model, surfaceInfo_t *slist, const char *
   		// same name as one already in?
 		if (!stricmp (surfInfo->name, surfaceName))
 		{
-			assert(surface == i);
+			//assert(surface == i); //JKA customizable skin support: this assert doesn't fix anything..?
 			// set descendants value
 			slist[i].offFlags = offFlags;
 			return qtrue;

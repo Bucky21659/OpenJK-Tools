@@ -101,24 +101,25 @@ LPCSTR OldSkins_FilenameToSkinDescription(string strLocalSkinFileName)
 	CString strSkinName(Filename_WithoutPath(Filename_WithoutExt(strLocalSkinFileName.c_str())));
 
 	strSkinName.MakeLower();
+
+	//JKA customizable skin support - fixes skins just named a1/b1/c1/e1/etc. being added to available skins
+	bool isSkinPart = (!strnicmp(strSkinName, "head_", 5) || !strnicmp(strSkinName, "torso_", 6) || !strnicmp(strSkinName, "lower_", 6));
+
 	int iLoc = strSkinName.Find('_');
-	if (iLoc != -1)
+	if (iLoc != -1 && !isSkinPart)
 	{
 		strSkinName = strSkinName.Mid(iLoc+1);
 	}
 
-	sprintf(sTemp,strSkinName);
+	Q_strncpyz(sTemp, strSkinName, sizeof(sTemp));
 	return sTemp;
 }
-
 
 // returns true if at least one set of skin data was read, else false...
 //
 static bool OldSkins_Read(LPCSTR psLocalFilename_GLM)
 {
 	LPCSTR psError = NULL;
-
-	CWaitCursor;
 
 	OldSkinsFound.clear();
 	
@@ -166,6 +167,8 @@ static bool OldSkins_Read(LPCSTR psLocalFilename_GLM)
 			string strLocalSkinFileName(ppsSkinFiles[i]);
 
 			// only look at skins that begin "modelname_skinvariation" for a given "modelname_"
+#if 1 //JKA customizable skin support
+			//starts by looking for skins that begin with model_
 			if (!strnicmp(strSkinFileMustContainThisName,strLocalSkinFileName.c_str(),strlen(strSkinFileMustContainThisName)))
 			{
 				Com_sprintf( sFileName, sizeof( sFileName ), "%s/%s", Filename_PathOnly(psLocalFilename_GLM), strLocalSkinFileName.c_str() );
@@ -186,6 +189,52 @@ static bool OldSkins_Read(LPCSTR psLocalFilename_GLM)
 					OldSkinsFound.clear();
 				}
 			}
+			else if (!strnicmp("head_", strLocalSkinFileName.c_str(), 5) || !strnicmp("torso_", strLocalSkinFileName.c_str(), 6) || !strnicmp("lower_", strLocalSkinFileName.c_str(), 6))
+			{ //now look for customizable skin parts- this is kinda ugly, should redo
+				//Com_Printf("found jedi skin part %s", strLocalSkinFileName.c_str());
+
+				Com_sprintf( sFileName, sizeof( sFileName ), "%s/%s", Filename_PathOnly(psLocalFilename_GLM), strLocalSkinFileName.c_str() );
+				//ri.Printf( PRINT_ALL, "...loading '%s'\n", sFileName );
+
+				iTotalBytesLoaded += ri.FS_ReadFile( sFileName, (void **)&buffers[i] );
+
+				if ( !buffers[i] ) {
+					ri.Error( ERR_DROP, "Couldn't load %s", sFileName );
+				}
+
+				char *psDataPtr = buffers[i];
+
+				psError = OldSkins_Parse( OldSkins_FilenameToSkinDescription(strLocalSkinFileName), psDataPtr);
+				COM_StripExtension(strLocalSkinFileName.c_str(), sFileName);
+				psError = OldSkins_Parse(sFileName, psDataPtr);
+				if (psError)
+				{
+					ErrorBox(va("Skins_Read(): Error reading file \"%s\"!\n\n( Skins will be ignored for this model )\n\nError was:\n\n%s",sFileName,psError));
+					OldSkinsFound.clear();
+				}
+			}
+#else
+			if (!strnicmp(strSkinFileMustContainThisName,strLocalSkinFileName.c_str(),strlen(strSkinFileMustContainThisName)))
+			{
+				Com_sprintf( sFileName, sizeof( sFileName ), "%s/%s", Filename_PathOnly(psLocalFilename_GLM), strLocalSkinFileName.c_str() );
+				//ri.Printf( PRINT_ALL, "...loading '%s'\n", sFileName );
+
+				iTotalBytesLoaded += ri.FS_ReadFile( sFileName, (void **)&buffers[i] );
+
+				if ( !buffers[i] ) {
+					ri.Error( ERR_DROP, "Couldn't load %s", sFileName );
+				}
+
+				char *psDataPtr = buffers[i];
+
+				psError = OldSkins_Parse( OldSkins_FilenameToSkinDescription(strLocalSkinFileName), psDataPtr);
+				if (psError)
+				{
+					ErrorBox(va("Skins_Read(): Error reading file \"%s\"!\n\n( Skins will be ignored for this model )\n\nError was:\n\n%s",sFileName,psError));
+					OldSkinsFound.clear();
+				}
+			}
+#endif
 		}
 
 		// free loaded skin files...
@@ -259,14 +308,49 @@ bool OldSkins_Apply( ModelContainer_t *pContainer, LPCSTR psSkinName )
 	CWaitCursor wait;
 
 	bool bReturn = true;
+	int iSurface = 0;
+#if 1 //JKA customizable skin support
+	bool isSkinPart = false, isHead = false, isTorso = false, isLower = false;
+
+	if (!strnicmp(psSkinName, "head_", 5)) {
+		isSkinPart = true;
+		isHead = true;
+	}
+	else if (!strnicmp(psSkinName, "torso_", 6)) {
+		isSkinPart = true;
+		isTorso = true;
+	}
+	else if (!strnicmp(psSkinName, "lower_", 6)) {
+		isSkinPart = true;
+		isLower = true;
+	}
+#endif
 
 	pContainer->strCurrentSkinFile	= psSkinName;
 //	pContainer->strCurrentSkinEthnic= "";
 
+#if 1 //JKA customizable skin support
+	if (!isSkinPart) { //don't clear textures when just switching out a skin part
+		pContainer->MaterialBinds.clear();
+		pContainer->MaterialShaders.clear();
+	}
+
+	for (iSurface = 0; iSurface<pContainer->iNumSurfaces; iSurface++)
+	{
+		// when we're at this point we know it's GLM model, and that the shader name is in fact a material name...
+		//
+		LPCSTR psMaterialName = GLMModel_GetSurfaceShaderName( pContainer->hModel, iSurface );
+
+		if (!isSkinPart) {
+			pContainer->MaterialShaders	[psMaterialName] = "";			// just insert the key for now, so the map<> is legit.
+			pContainer->MaterialBinds	[psMaterialName] = (GLuint) 0;	// default to gl-white-notfound texture
+		}
+	}
+#else
 	pContainer->MaterialBinds.clear();
 	pContainer->MaterialShaders.clear();
 
-	for (int iSurface = 0; iSurface<pContainer->iNumSurfaces; iSurface++)
+	for (iSurface = 0; iSurface<pContainer->iNumSurfaces; iSurface++)
 	{
 		// when we're at this point we know it's GLM model, and that the shader name is in fact a material name...
 		//
@@ -275,6 +359,7 @@ bool OldSkins_Apply( ModelContainer_t *pContainer, LPCSTR psSkinName )
 		pContainer->MaterialShaders	[psMaterialName] = "";			// just insert the key for now, so the map<> is legit.
 		pContainer->MaterialBinds	[psMaterialName] = (GLuint) 0;	// default to gl-white-notfound texture
 	}
+#endif
 
 //typedef vector< pair<string,string> > StringPairVector_t;
 //typedef map<string,StringPairVector_t> OldSkinSets_t;	// map key = (eg) "blue", string-pairs
@@ -282,14 +367,26 @@ bool OldSkins_Apply( ModelContainer_t *pContainer, LPCSTR psSkinName )
 	OldSkinSets_t::iterator itOldSkins = pContainer->OldSkinSets.find(psSkinName);
 	if (itOldSkins != pContainer->OldSkinSets.end())
 	{
+		int iSkinEntry;
 		StringPairVector_t &StringPairs = (*itOldSkins).second;
 
-		for (int iSkinEntry = 0; iSkinEntry < StringPairs.size(); iSkinEntry++)
+		for (iSkinEntry = 0; iSkinEntry < StringPairs.size(); iSkinEntry++)
 		{
 			LPCSTR psMaterialName = StringPairs[iSkinEntry].first.c_str();
 			LPCSTR psShaderName   = StringPairs[iSkinEntry].second.c_str();
 
+#if 1 //JKA customizable skin support
+			if (!Q_stricmp(psShaderName, "*off")) { //fixes surfaces with *off in default skin files showing up - causes an assert in debug builds..?
+				G2_SetSurfaceOnOff(pContainer->hModel, pContainer->slist, psMaterialName, SURF_OFF, pContainer->slist[iSkinEntry].ident);
+			}
+			else { //might need to check so this only happens if it's allowed to, or needs to?
+				G2_SetSurfaceOnOff(pContainer->hModel, pContainer->slist, psMaterialName, SURF_ON, pContainer->slist[iSkinEntry].ident);
+				pContainer->MaterialShaders[psMaterialName] = psShaderName;
+			}
+			//end
+#else
 			pContainer->MaterialShaders[psMaterialName] = psShaderName;
+#endif
 
 //			LPCSTR psLocalTexturePath = R_FindShader( psShaderName );		// shader->texture name
 //			if (psLocalTexturePath && strlen(psLocalTexturePath))
@@ -435,21 +532,27 @@ bool OldSkins_Validate( ModelContainer_t *pContainer, int iSkinNumber )
 	int iSurface_Other = 0;
 
 	// build up a list of shaders used...
-	//	
+	//
 	StringSet_t UniqueSkinShaders;	
 	//SkinFileMaterialsMissing_t SkinFileMaterialsMissing;
 	int iThisSkinIndex = 0;
-
 	CString strSkinFileSurfaceDiscrepancies;
 	
 	for (OldSkinSets_t::iterator itOldSkins = pContainer->OldSkinSets.begin(); itOldSkins != pContainer->OldSkinSets.end(); ++itOldSkins, iThisSkinIndex++)
-	{					
+	{
+		int iSurface;
 		string strSkinName				= (*itOldSkins).first;
 		StringPairVector_t &StringPairs = (*itOldSkins).second;
 
+		//JKA customizable skin support
+		if (!strSkinName.compare(0, 5, "head_") || !strSkinName.compare(0, 6, "torso_") || !strSkinName.compare(0, 6, "lower_"))
+		{ //should probably do something like only checking for relevant surfaces here..
+			continue;
+		}
+
 		if (iSkinNumber == iThisSkinIndex || iSkinNumber == -1)
 		{
-			for (int iSurface = 0; iSurface < StringPairs.size(); iSurface++)
+			for (iSurface = 0; iSurface < StringPairs.size(); iSurface++)
 			{
 				string strSurface(StringPairs[iSurface].first);
 				string strTGAName(StringPairs[iSurface].second);
@@ -477,13 +580,11 @@ bool OldSkins_Validate( ModelContainer_t *pContainer, int iSkinNumber )
 						if (iSurface_Other == StringPairs_Other.size())
 						{
 							// surface not found in this file...
-							//
 							strSkinFileSurfaceDiscrepancies += va("Surface \"%s\" ( skin \"%s\" ) had no entry in skin \"%s\"\n",strSurface.c_str(),strSkinName.c_str(),strSkinName_Other.c_str());
 						}
 					}
 				}
-
-			}			
+			}
 		}
 	}
 
@@ -679,5 +780,3 @@ int DaysSinceCompile(void)
 
 */
 ////////////////// eof /////////////////
-
-
