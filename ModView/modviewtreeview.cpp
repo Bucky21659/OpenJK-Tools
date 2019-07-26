@@ -1582,11 +1582,17 @@ void CModViewTreeView::OnLButtonDblClk(UINT nFlags, CPoint point)
 					if (Model_MultiSeq_IsActive(gTreeItemData.iModelHandle, true))
 					{
 						Model_MultiSeq_Add(gTreeItemData.iModelHandle, gTreeItemData.iItemNumber, true);
+#if 1 //always play animation when double clicking on one
+						AppVars.bAnimate = true;
+#endif
 					}
 					else
 					{
 						Model_Sequence_Lock(gTreeItemData.iModelHandle, gTreeItemData.iItemNumber, true);
 						ModelList_Rewind();
+#if 1 //always play animation when double clicking on one
+						AppVars.bAnimate = true;
+#endif
 					}
 				}
 				break;
