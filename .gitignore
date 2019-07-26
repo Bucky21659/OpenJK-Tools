@@ -8,3 +8,10 @@
 *.lastbuildstate
 *.res
 *.idb
+
+# Visual Studio files/directories
+*.vcxproj
+*.user
+ModView/\.vs/
+ModView/Debug/
+ModView/Release/
