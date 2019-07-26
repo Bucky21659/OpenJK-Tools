@@ -294,7 +294,7 @@ BEGIN
         MENUITEM "( Sequences Popup )",         ID_JUNK, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Toggle pathnames on/off in sequence treeitems (if available)", ID_SEQUENCES_VIEWFULLPATH
-        MENUITEM "Sort by Alpha ( unchecked = Sort by Frame # )", ID_SEQUENCES_SORTALPHABETICALLY, CHECKED
+        MENUITEM "Sort by Name ( unchecked = Sort by Frame # )", ID_SEQUENCES_SORTALPHABETICALLY, CHECKED
         MENUITEM SEPARATOR
         MENUITEM "Unlock All",                  ID_SEQS_UNLOCKALL
         MENUITEM SEPARATOR
