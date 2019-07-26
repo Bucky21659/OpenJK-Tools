@@ -820,7 +820,7 @@ qboolean G2_Stop_Bone_Anim_Index( boneInfo_t *blist, int index)
 	// did we find it?
 	if (index != -1)
 	{
-		blist[index].flags &= ~(BONE_ANIM_OVERRIDE_LOOP || BONE_ANIM_OVERRIDE);
+		blist[index].flags &= ~(BONE_ANIM_OVERRIDE_LOOP | BONE_ANIM_OVERRIDE);
 		// try and remove this bone if we can
 		return G2_Remove_Bone_Index(blist, index);
 	}
@@ -973,7 +973,7 @@ qboolean G2_Get_Bone_Anim(const qhandle_t model, boneInfo_t *blist, const char *
 	if (index != -1)
 	{ 
 		// are we an animating bone?
-		if (blist[index].flags && (BONE_ANIM_OVERRIDE_LOOP || BONE_ANIM_OVERRIDE))
+		if (blist[index].flags & (BONE_ANIM_OVERRIDE_LOOP | BONE_ANIM_OVERRIDE))
 		{
 			*currentFrame = blist[index].currentFrame;
 			*startFrame = blist[index].startFrame;
@@ -996,7 +996,7 @@ qboolean G2_Stop_Bone_Anim(const qhandle_t model, boneInfo_t *blist, const char 
 	// did we find it?
 	if (index != -1)
 	{
-		blist[index].flags &= ~(BONE_ANIM_OVERRIDE_LOOP || BONE_ANIM_OVERRIDE);
+		blist[index].flags &= ~(BONE_ANIM_OVERRIDE_LOOP | BONE_ANIM_OVERRIDE);
 		// try and remove this bone if we can
 		return G2_Remove_Bone_Index(blist, index);
 	}
@@ -1015,7 +1015,7 @@ qboolean G2_Stop_Bone_Angles(const qhandle_t model, boneInfo_t *blist, const cha
 	// did we find it?
 	if (index != -1)
 	{
-		blist[index].flags &= ~(BONE_ANGLES_RELATIVE || BONE_ANGLES_ADDITIVE || BONE_ANGLES_ABSOLUTE);
+		blist[index].flags &= ~(BONE_ANGLES_RELATIVE | BONE_ANGLES_ADDITIVE | BONE_ANGLES_ABSOLUTE);
 		// try and remove this bone if we can
 		return G2_Remove_Bone_Index(blist, index);
 	}
@@ -1037,7 +1037,7 @@ void G2_Animate_Bone_List(boneInfo_t *blist, float timeoffset)
 		if (blist[i].boneNumber != -1)
 		{
 			// are we animating?
-			if (blist[i].flags && (BONE_ANIM_OVERRIDE_LOOP || BONE_ANIM_OVERRIDE))
+			if (blist[i].flags & (BONE_ANIM_OVERRIDE_LOOP | BONE_ANIM_OVERRIDE))
 			{
 				// set up old frame
 				blist[i].currentFrame = blist[i].newFrame;
@@ -1870,4 +1870,3 @@ void R_LoadQuaternionIndex(const char* filename)
 
 
 //////////////////// eof /////////////////
-
