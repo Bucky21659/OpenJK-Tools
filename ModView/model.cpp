@@ -4412,6 +4412,29 @@ bool Model_Sequence_Lock( ModelHandle_t hModel, int iSequenceNumber, bool bPrima
 
 	ModelList_ForceRedraw();
 
+#if 1 //adjust playback speed to match the FPS set in the animation.cfg file
+		if (pContainer && pContainer->SequenceList[iSequenceNumber].iFPS != 0 &&
+			!pContainer->SequenceList[iSequenceNumber].bIsDefault)
+		{
+		  int newFPS = 20;
+		  double newAnimSpeed;
+
+		  newFPS = pContainer->SequenceList[iSequenceNumber].iFPS;
+
+		  if (newFPS < 0)
+			newFPS *= -1;
+
+		  if (newFPS >= 100 || newFPS < 1)
+			newFPS = 20;
+
+		  newAnimSpeed = trunc((double)1.0000) / trunc((double)newFPS);
+
+		  // if (AppVars.dAnimSpeed != newAnimSpeed) {
+			  AppVars.dAnimSpeed = newAnimSpeed;
+		  //}
+		}
+#endif
+
 	return bReturn;
 }
 
