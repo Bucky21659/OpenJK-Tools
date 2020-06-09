@@ -14,11 +14,6 @@
 static	image_t* hashTable[FILE_HASH_SIZE];
 
 
-
-
-
-
-
 /*
 ========================================================================
 
@@ -59,8 +54,6 @@ typedef struct _TargaHeader {
 	unsigned short	x_origin, y_origin, width, height;
 	unsigned char	pixel_size, attributes;
 } TargaHeader;
-
-
 
 
 /*
@@ -252,11 +245,11 @@ typedef struct _TargaHeader {
  correct
 
 000000  00 00 02 00 00 00 00 18   00 00 00 00 76 02 43 01   ............v.C.
-000010  18 20 ED D9 C9 EC D9 C8   EC D9 C7 EA D7 C7 EA D7   . íÙÉìÙÈìÙÇê×Çê×
+000010  18 20 ED D9 C9 EC D9 C8   EC D9 C7 EA D7 C7 EA D7   . ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 bad
 000000  00 00 02 00 00 00 00 00   00 00 00 00 76 02 43 01   ............v.C.
-000010  20 00 ED D9 C9 FF EC D9   C8 FF EC D9 C7 FF EA D7    .íÙÉÿìÙÈÿìÙÇÿê×
+000010  20 00 ED D9 C9 FF EC D9   C8 FF EC D9 C7 FF EA D7    .ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 
   #pragma pack(push,1)
@@ -794,8 +787,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height)
 			}		
 		}
 	}
-	else 
-	if (pHeader->byImageType == 10)   // RLE-RGB
+	else if (pHeader->byImageType == 10)   // RLE-RGB
 	{
 		// I've no idea if this stuff works, I normally reject RLE targas, but this is from ID's code
 		//	so maybe I should try and support it...
@@ -913,7 +905,8 @@ TGADone:
 		ErrorBox(va("Error parsing file \"%s\"!\n\n",name, sErrorString));
 	}
 }
- 
+
+
 /*
 ==============
 LoadPCX
@@ -1040,7 +1033,6 @@ static void LoadPCX32 ( const char *filename, byte **pic, int *width, int *heigh
 	ri.Free (pic8);
 	ri.Free (palette);
 }
-
 
 
 /*

@@ -1867,6 +1867,5 @@ void R_LoadQuaternionIndex(const char* filename)
 
 }
 */
-
-
 //////////////////// eof /////////////////
+

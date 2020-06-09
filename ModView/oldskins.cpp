@@ -744,7 +744,7 @@ int DaysSinceCompile(void)
 		} else {
 			time_t ltime;			
 			_tzset();			
-			time( &ltime );    
+			time( &ltime );
 			struct tm *today = localtime(&ltime);
 			strftime(sTestDate,sizeof(sTestDate),"%b %d %Y",today);			
 		}
