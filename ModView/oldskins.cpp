@@ -102,12 +102,15 @@ LPCSTR OldSkins_FilenameToSkinDescription(string strLocalSkinFileName)
 
 	strSkinName.MakeLower();
 
-	//JKA customizable skin support - fixes skins just named a1/b1/c1/e1/etc. being added to available skins
-	bool isSkinPart = (!strnicmp(strSkinName, "head_", 5) || !strnicmp(strSkinName, "torso_", 6) || !strnicmp(strSkinName, "lower_", 6));
-
 	int iLoc = strSkinName.Find('_');
-	if (iLoc != -1 && !isSkinPart)
-	{
+
+#if JKA_CUSTOM_SKINS //Prevents skins just named a1/b1/c1/e1/etc. being added to available skins
+	if (!Q_strncmp(strSkinName, "head_", 5) || !Q_strncmp(strSkinName, "torso_", 6) || !Q_strncmp(strSkinName, "lower_", 6)) {
+		iLoc = -1; //0s if statement below
+	}
+#endif
+
+	if (iLoc != -1) {
 		strSkinName = strSkinName.Mid(iLoc+1);
 	}
 
@@ -123,7 +126,7 @@ static bool OldSkins_Read(LPCSTR psLocalFilename_GLM)
 
 	OldSkinsFound.clear();
 	
-	LPCSTR psSkinsPath = va("%s%s",gamedir,Filename_PathOnly(psLocalFilename_GLM));
+	LPCSTR psSkinsPath = va("%s%s", gamedir, Filename_PathOnly(psLocalFilename_GLM));
 
 	if (psSkinsPath)
 	{
@@ -167,9 +170,8 @@ static bool OldSkins_Read(LPCSTR psLocalFilename_GLM)
 			string strLocalSkinFileName(ppsSkinFiles[i]);
 
 			// only look at skins that begin "modelname_skinvariation" for a given "modelname_"
-#if 1 //JKA customizable skin support
-			//starts by looking for skins that begin with model_
-			if (!strnicmp(strSkinFileMustContainThisName,strLocalSkinFileName.c_str(),strlen(strSkinFileMustContainThisName)))
+#if JKA_CUSTOM_SKINS //start by looking for skins that begin with model_
+			if (!strLocalSkinFileName.compare(0, strlen(strSkinFileMustContainThisName), strSkinFileMustContainThisName))
 			{
 				Com_sprintf( sFileName, sizeof( sFileName ), "%s/%s", Filename_PathOnly(psLocalFilename_GLM), strLocalSkinFileName.c_str() );
 				//ri.Printf( PRINT_ALL, "...loading '%s'\n", sFileName );
@@ -189,7 +191,7 @@ static bool OldSkins_Read(LPCSTR psLocalFilename_GLM)
 					OldSkinsFound.clear();
 				}
 			}
-			else if (!strnicmp("head_", strLocalSkinFileName.c_str(), 5) || !strnicmp("torso_", strLocalSkinFileName.c_str(), 6) || !strnicmp("lower_", strLocalSkinFileName.c_str(), 6))
+			else if (!strLocalSkinFileName.compare(0, 5, "head_") || !strLocalSkinFileName.compare(0, 6, "torso_") || !strLocalSkinFileName.compare(0, 6, "lower_"))
 			{ //now look for customizable skin parts- this is kinda ugly, should redo
 				//Com_Printf("found jedi skin part %s", strLocalSkinFileName.c_str());
 
@@ -309,28 +311,25 @@ bool OldSkins_Apply( ModelContainer_t *pContainer, LPCSTR psSkinName )
 
 	bool bReturn = true;
 	int iSurface = 0;
-#if 1 //JKA customizable skin support
+#if JKA_CUSTOM_SKINS
 	bool isSkinPart = false, isHead = false, isTorso = false, isLower = false;
 
-	if (!strnicmp(psSkinName, "head_", 5)) {
-		isSkinPart = true;
-		isHead = true;
+	if (!Q_strncmp(psSkinName, "head_", 5)) {
+		isSkinPart = isHead = true;
 	}
-	else if (!strnicmp(psSkinName, "torso_", 6)) {
-		isSkinPart = true;
-		isTorso = true;
+	else if (!Q_strncmp(psSkinName, "torso_", 6)) {
+		isSkinPart = isTorso = true;
 	}
-	else if (!strnicmp(psSkinName, "lower_", 6)) {
-		isSkinPart = true;
-		isLower = true;
+	else if (!Q_strncmp(psSkinName, "lower_", 6)) {
+		isSkinPart = isLower = true;
 	}
 #endif
 
 	pContainer->strCurrentSkinFile	= psSkinName;
 //	pContainer->strCurrentSkinEthnic= "";
 
-#if 1 //JKA customizable skin support
-	if (!isSkinPart) { //don't clear textures when just switching out a skin part
+#if JKA_CUSTOM_SKINS //don't clear textures when just switching out a skin part
+	if (!isSkinPart) {
 		pContainer->MaterialBinds.clear();
 		pContainer->MaterialShaders.clear();
 	}
@@ -375,15 +374,14 @@ bool OldSkins_Apply( ModelContainer_t *pContainer, LPCSTR psSkinName )
 			LPCSTR psMaterialName = StringPairs[iSkinEntry].first.c_str();
 			LPCSTR psShaderName   = StringPairs[iSkinEntry].second.c_str();
 
-#if 1 //JKA customizable skin support
+#if JKA_CUSTOM_SKINS
 			if (!Q_stricmp(psShaderName, "*off")) { //fixes surfaces with *off in default skin files showing up - causes an assert in debug builds..?
 				G2_SetSurfaceOnOff(pContainer->hModel, pContainer->slist, psMaterialName, SURF_OFF, pContainer->slist[iSkinEntry].ident);
 			}
-			else { //might need to check so this only happens if it's allowed to, or needs to?
+			else { //might want checks so this only happens when necessary?
 				G2_SetSurfaceOnOff(pContainer->hModel, pContainer->slist, psMaterialName, SURF_ON, pContainer->slist[iSkinEntry].ident);
 				pContainer->MaterialShaders[psMaterialName] = psShaderName;
 			}
-			//end
 #else
 			pContainer->MaterialShaders[psMaterialName] = psShaderName;
 #endif
@@ -544,11 +542,10 @@ bool OldSkins_Validate( ModelContainer_t *pContainer, int iSkinNumber )
 		string strSkinName				= (*itOldSkins).first;
 		StringPairVector_t &StringPairs = (*itOldSkins).second;
 
-		//JKA customizable skin support
+#if JKA_CUSTOM_SKINS
 		if (!strSkinName.compare(0, 5, "head_") || !strSkinName.compare(0, 6, "torso_") || !strSkinName.compare(0, 6, "lower_"))
-		{ //should probably do something like only checking for relevant surfaces here..
-			continue;
-		}
+			continue; //should probably change to only check for the relevant surfaces here?
+#endif
 
 		if (iSkinNumber == iThisSkinIndex || iSkinNumber == -1)
 		{

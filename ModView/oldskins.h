@@ -5,6 +5,7 @@
 #ifndef OLDSKINS_H
 #define OLDSKINS_H
 
+#define JKA_CUSTOM_SKINS 1 //enables support for custom multipart skin support (JKA)
 
 typedef vector< pair<string,string> > StringPairVector_t;
 typedef map<string,StringPairVector_t> OldSkinSets_t;	// map key = (eg) "blue", string-pairs
