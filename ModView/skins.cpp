@@ -355,9 +355,6 @@ static SkinFileTimeDates_t SkinFileTimeDates;
 static bool Skins_Read(LPCSTR psModelFilename)
 {
 	LPCSTR psError = NULL;
-
-	CWaitCursor;
-
 	LPCSTR psSkinsPath = Skins_ModelNameToSkinPath(psModelFilename);	// eg "models/characters/skins"
 
 	if (psSkinsPath)

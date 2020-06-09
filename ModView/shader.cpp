@@ -629,7 +629,7 @@ const char *R_FindShader( const char *psLocalMaterialName)
 	}
 */
 	COM_StripExtension( psLocalMaterialName, strippedName );
-	strlwr(strippedName);
+	Q_strlwr(strippedName);
 
 	ShadersFoundAndFilesPicked_t::iterator it = ShadersFoundAndFilesPicked.find(strippedName);
 	if (it != ShadersFoundAndFilesPicked.end())

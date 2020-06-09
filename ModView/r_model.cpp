@@ -24,12 +24,14 @@ void Com_Printf( const char *format, ... )
 	index = (++index)&15;
 	
 	va_start (argptr, format);
-	vsprintf (string[index], format,argptr);
+	vsprintf_s(string[index], format,argptr);
 	va_end (argptr);
 
 	OutputDebugString(string[index]);	
 //	assert(0);
+#ifndef _DEBUG
 	ErrorBox(string[index]);
+#endif
 }
 
 void Q_strncpyz( char *dest, LPCSTR src, int destlen)
@@ -87,7 +89,7 @@ void QDECL Com_sprintf( char *dest, int size, const char *fmt, ...) {
 	char	bigbuffer[32000];	// big, but small enough to fit in PPC stack
 
 	va_start (argptr,fmt);
-	len = vsprintf (bigbuffer,fmt,argptr);
+	len = vsprintf_s(bigbuffer,fmt,argptr);
 	va_end (argptr);
 	if ( len >= sizeof( bigbuffer ) ) {
 		Com_Error( ERR_FATAL, "Com_sprintf: overflowed bigbuffer" );
@@ -149,7 +151,7 @@ void Crap_Printf( int printLevel, const char *format, ...)
 	
 	va_start (argptr, format);
 //	vsprintf (string[index], format,argptr);
-	_vsnprintf(string[index], sizeof(string[0]), format, argptr);
+	_vsnprintf_s(string[index], sizeof(string[0]), format, argptr);
 	va_end (argptr);
 	string[index][sizeof(string[0])-1] = '\0';
 
@@ -186,7 +188,7 @@ void Crap_Error( int errorLevel, const char *format, ...)
 	static char	string[1024];
 	
 	va_start (argptr, format);
-	vsprintf (string, format,argptr);
+	vsprintf_s(string, format,argptr);
 	va_end (argptr);
 
 	// should maybe switch-case off these, but for now...
@@ -252,7 +254,7 @@ int Crap_FS_ReadFile( const char *qpath, void **buffer )
 	}
 
 	char sTemp[1024];
-	sprintf(sTemp,"%s%s",bHackToAllowFullPathDuringTestFunc?"":gamedir,qpath);
+	Com_sprintf(sTemp, sizeof(sTemp), "%s%s", bHackToAllowFullPathDuringTestFunc?"":gamedir,qpath);
 
 	if (!FileExists(sTemp))
 	{
@@ -288,7 +290,7 @@ int Crap_FS_WriteFile( const char *qpath, const void *pBuffer, int iSize )
 	}
 
 	char sTemp[1024];
-	sprintf(sTemp,"%s%s",gamedir,qpath);
+	Com_sprintf(sTemp, sizeof(sTemp), "%s%s", gamedir, qpath);
 
 	return SaveFile (sTemp, pBuffer, iSize);
 }
@@ -610,8 +612,8 @@ ModelHandle_t RE_RegisterModel( const char *name ) {
 	{
 		char filename[1024];
 
-		strcpy( filename, name );
-		strlwr( filename );	// for bin map<> cacheing to work
+		Q_strncpyz( filename, name, sizeof(filename) );
+		Q_strlwr( filename );	// for bin map<> cacheing to work
 
 		if ( lod != 0 ) {
 			char namebuf[80];
@@ -620,8 +622,8 @@ ModelHandle_t RE_RegisterModel( const char *name ) {
 			{
 				*strrchr( filename, '.' ) = 0;
 			}
-			sprintf( namebuf, "_%d.md3", lod );
-			strcat( filename, namebuf );
+			Com_sprintf( namebuf, sizeof(namebuf), "_%d.md3", lod );
+			Q_strcat( filename, namebuf );
 		}
 
 		bool bIsFakeGLA = false;

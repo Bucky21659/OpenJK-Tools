@@ -462,8 +462,18 @@ extern refimport_t ri;
 //////////////////////////////////////////////////////////
 //
 // some crap for compile-ease...
+#if (_MSC_VER >= 1700)
+#define Q_stricmp	_stricmp
+#define Q_strlwr	_strlwr_s
+#define Q_strncmp	_strnicmp
+#define Q_strcat	strcat_s
+#else
 #define Q_stricmp	stricmp
-#define Q_strlwr	strlwr
+#define	Q_strlwr	strlwr
+#define Q_strncmp	strnicmp
+#define Q_strcat	strcat
+#endif
+
 #define LittleLong(x) x
 #define LittleShort(x) x
 #define LittleFloat(x) x

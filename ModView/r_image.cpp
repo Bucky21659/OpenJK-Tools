@@ -598,7 +598,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height)
 
 	*pic = NULL;
 
-#define TGA_FORMAT_ERROR(blah) {sprintf(sErrorString,blah); bFormatErrors = true; goto TGADone;}
+#define TGA_FORMAT_ERROR(blah) {Com_sprintf(sErrorString, sizeof(sErrorString), blah); bFormatErrors = true; goto TGADone;}
 //#define TGA_FORMAT_ERROR(blah) ri.Error( ERR_DROP, blah );
 
 	//
@@ -962,7 +962,7 @@ static void LoadPCX ( const char *filename, byte **pic, byte **palette, int *wid
 	if (palette)
 	{
 		*palette = (unsigned char *)ri.Malloc(768);
-		memcpy (*palette, (byte *)pcx + len - 768, 768);
+		memcpy(*palette, (byte *)pcx + len - 768, 768);
 	}
 
 	if (width)
@@ -1057,19 +1057,19 @@ void R_LoadImage2( const char *name, byte **pic, int *width, int *height ) {
 	}
 
 	char *psExt = const_cast<char*>( strstr( name, "." ) );
-	strcpy(g_sImageExtension,psExt?psExt:"");
+	Q_strncpyz(g_sImageExtension, psExt?psExt:"", sizeof(g_sImageExtension));
 
 	if ( !Q_stricmp( name+len-4, ".tga" ) ) {
 	  LoadTGA( name, pic, width, height );            // try tga first
     if (!*pic) {                                    //
 		  char altname[MAX_QPATH];                      // try jpg in place of tga 
-      strcpy( altname, name );                      
+      Q_strncpyz( altname, name, sizeof(altname) );                      
       len = strlen( altname );                  
       altname[len-3] = 'j';
       altname[len-2] = 'p';
       altname[len-1] = 'g';
 			LoadJPG( altname, pic, width, height );
-			strcpy(g_sImageExtension,".jpg");
+			Q_strncpyz(g_sImageExtension, ".jpg", sizeof(g_sImageExtension));
 		}
   } else if ( !Q_stricmp(name+len-4, ".pcx") ) {
     LoadPCX32( name, pic, width, height );
@@ -1130,7 +1130,7 @@ void R_LoadImage1( const char *name, byte **pic, int *width, int *height )
 	LoadPNG32( work, pic, width, height, NULL ); 			// try png first
 	if(*pic)
 	{
-		strcpy(g_sImageExtension,".png");
+		Q_strncpyz(g_sImageExtension,".png", sizeof(g_sImageExtension));
 		return;
 	}
 	COM_StripExtension(name, work);
@@ -1138,7 +1138,7 @@ void R_LoadImage1( const char *name, byte **pic, int *width, int *height )
 	LoadTGA( work, pic, width, height); 				// try tga next
 	if(*pic)
 	{
-		strcpy(g_sImageExtension,".tga");
+		Q_strncpyz(g_sImageExtension,".tga", sizeof(g_sImageExtension));
 		return;
 	}
 	COM_StripExtension(name, work);
@@ -1146,7 +1146,7 @@ void R_LoadImage1( const char *name, byte **pic, int *width, int *height )
 	LoadJPG( work, pic, width, height );					// try jpg last
 	if(*pic)
 	{
-		strcpy(g_sImageExtension,".jpg");
+		Q_strncpyz(g_sImageExtension,".jpg", sizeof(g_sImageExtension));
 		return;
 	}   
 
@@ -1163,15 +1163,15 @@ void R_LoadImage( const char *name, byte **pic, int *width, int *height )
 {
 	// only attempt load if not the special case...
 	//
-	if (stricmp(name,"[NoMaterial]"))	
+	if (Q_stricmp(name,"[NoMaterial]"))	
 	{
 		// thanks, Jake...  <sigh>
 		//
 		char sTempName[1024]={0};
 
 		if (bXMenPathHack)
-			strcpy(sTempName,"textures/");
-		strcat(sTempName,name);
+			Q_strncpyz(sTempName, "textures/", sizeof(sTempName));
+		Q_strcat(sTempName, sizeof(sTempName), name);
 
 		gbInImageLoader = true;
 		{
