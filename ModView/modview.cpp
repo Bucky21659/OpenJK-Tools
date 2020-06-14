@@ -56,21 +56,9 @@ CModViewApp theApp;
 
 bool bSafeToAddToMRU = false;
 bool gbMainFrameInitialised = false;
-BOOL CModViewApp::InitInstance()
+BOOL CModViewApp::InitInstance(void)
 {
-	// CG: The following block was added by the Splash Screen component.
-\
-	{
-\
-		CCommandLineInfo cmdInfo;
-\
-		ParseCommandLine(cmdInfo);
-\
-
-\
-		CSplashWnd::EnableSplashScreen(cmdInfo.m_bShowSplash);
-\
-	}
+#if (_MSC_VER < 1200) // MFC 6.0 or earlier
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size
 	//  of your final executable, you should remove from the following
@@ -79,8 +67,14 @@ BOOL CModViewApp::InitInstance()
 #ifdef _AFXDLL
 	Enable3dControls();			// Call this when using MFC in a shared DLL
 #else
-	//Enable3dControlsStatic();	// Call this when linking to MFC statically
+	Enable3dControlsStatic();	// Call this when linking to MFC statically
 #endif
+#endif
+
+	// Parse command line for standard shell commands, DDE, file open
+	CCommandLineInfo cmdInfo;
+	ProcessShellCommand(cmdInfo);
+	CSplashWnd::EnableSplashScreen(cmdInfo.m_bShowSplash);
 
 	// Change the registry key under which our settings are stored.
 	// TODO: You should modify this string to be something appropriate
@@ -100,17 +94,13 @@ BOOL CModViewApp::InitInstance()
 		RUNTIME_CLASS(CModViewView));
 	AddDocTemplate(pDocTemplate);
 
-	// Parse command line for standard shell commands, DDE, file open
-	CCommandLineInfo cmdInfo;
-	ParseCommandLine(cmdInfo);
-
 	App_Init();
 
 /*	TEMP ADDITION ONLY
 // enable file manager drag/drop and DDE Execute open
    EnableShellOpen();
    RegisterShellFileTypes();
-*/   
+*/
 
 	// Dispatch commands specified on the command line  (ignore this, try and avoid that crappy document class)
 	if (!ProcessShellCommand(cmdInfo))
@@ -132,11 +122,9 @@ BOOL CModViewApp::InitInstance()
 
 	CSplashWnd::HideSplashScreen(true);
 	StatusMessage(NULL);
-	/*
-extern void R_LoadQuaternionIndex(const char* filename);
+	/*extern void R_LoadQuaternionIndex(const char* filename);
+	R_LoadQuaternionIndex("quaternions.bin");*/
 
-	R_LoadQuaternionIndex("quaternions.bin");
-	*/
 	return TRUE;
 }
 

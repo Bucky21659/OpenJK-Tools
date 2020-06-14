@@ -469,7 +469,7 @@ extern refimport_t ri;
 #define Q_strcat	strcat_s
 #else
 #define Q_stricmp	stricmp
-#define	Q_strlwr	strlwr
+#define Q_strlwr	strlwr
 #define Q_strncmp	strnicmp
 #define Q_strcat	strcat
 #endif

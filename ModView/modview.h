@@ -29,9 +29,9 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CModViewApp)
 	public:
-	virtual BOOL InitInstance();
+	virtual BOOL InitInstance(void);
 	virtual BOOL OnIdle(LONG lCount);
-	virtual int ExitInstance();
+	virtual int ExitInstance(void);
 	//}}AFX_VIRTUAL
 
 // Implementation
